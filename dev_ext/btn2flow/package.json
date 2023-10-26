@@ -1,0 +1,38 @@
+{
+	"name": "directus-extension-btn2flow",
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-custom-interface"
+	],
+	"type": "module",
+	"directus:extension": {
+		"type": "interface",
+		"path": "../../directus/extensions/interfaces/btn2flow/index.js",
+		"source": "src/index.ts",
+		"host": "^10.1.13"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link"
+	},
+	"devDependencies": {
+		"@directus/extensions-sdk": "10.1.13",
+		"prettier": "^3.0.3",
+		"typescript": "^5.2.2",
+		"vue": "^3.3.7"
+	},
+	"dependencies": {
+		"lodash": "^4.17.21",
+		"micromustache": "^8.0.3",
+		"node-sass": "^9.0.0"
+	},
+	"prettier": {
+		"semi": false,
+		"singleQuote": true
+	}
+}
