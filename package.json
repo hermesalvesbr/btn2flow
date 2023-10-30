@@ -15,7 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "cross-fetch": "^4.0.0",
-    "directus": "^10.7.0",
+    "directus": "^10.7.1",
     "directus-extension-computed-interface": "^1.9.0",
     "directus-extension-field-actions": "^1.6.3",
     "directus-extension-flow-manager": "^1.2.2",
