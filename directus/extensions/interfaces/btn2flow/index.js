@@ -1,5 +1,5 @@
-import { defineComponent, ref, resolveComponent, openBlock, createElementBlock, Fragment, renderList, createVNode, normalizeClass, withModifiers, withCtx, createBlock, createCommentVNode, toDisplayString, createElementVNode } from 'vue';
-import { useApi } from '@directus/extensions-sdk';
+import { defineComponent, ref, toRefs, resolveComponent, openBlock, createElementBlock, Fragment, renderList, unref, createVNode, normalizeClass, withModifiers, withCtx, createBlock, createCommentVNode, toDisplayString, createElementVNode } from 'vue';
+import { useApi, getFieldsFromTemplate } from '@directus/extensions-sdk';
 
 var util;
 (function (util) {
@@ -4137,9 +4137,31 @@ var _sfc_main = /* @__PURE__ */ defineComponent({
     const api = useApi();
     const tooltipId = ref(null);
     const success_message = ref("The Flow has triggered successfully");
-    const startFlow = async (id, index) => {
+    const props = __props;
+    const { collection, primaryKey } = toRefs(props);
+    const updatedFlows = props.flows;
+    const fetchCollectionValues = async () => {
       try {
-        const res = await api.get(`flows/trigger/${id}`);
+        const { data } = await api.get(`items/${collection.value}`);
+        if (data.data)
+          return data.data;
+      } catch (error) {
+        console.log(error);
+        return null;
+      }
+    };
+    const getCollectionFieldsKeys = (flow) => {
+      var _a;
+      const fields = /* @__PURE__ */ new Set();
+      getFieldsFromTemplate((_a = flow.fields) != null ? _a : "").forEach(
+        (field) => fields.add(field)
+      );
+      return Array.from(fields);
+    };
+    const startFlow = async (flow, index) => {
+      const { id, payload } = flow;
+      try {
+        const res = await api.post(`flows/trigger/${id}`, payload);
         if (res) {
           tooltipId.value = index;
           setTimeout(() => {
@@ -4150,6 +4172,18 @@ var _sfc_main = /* @__PURE__ */ defineComponent({
         console.log(error);
       }
     };
+    updatedFlows.map(async (flow) => {
+      if (!flow.fields)
+        return;
+      const selectedCollectionItems = getCollectionFieldsKeys(flow);
+      const collectionValues = await fetchCollectionValues();
+      if (!collectionValues || !collectionValues.length)
+        return;
+      flow.payload = {};
+      selectedCollectionItems.forEach((field) => {
+        flow.payload[field] = collectionValues[0][field];
+      });
+    });
     return (_ctx, _cache) => {
       const _component_v_icon = resolveComponent("v-icon");
       const _component_v_button = resolveComponent("v-button");
@@ -4157,7 +4191,7 @@ var _sfc_main = /* @__PURE__ */ defineComponent({
         (openBlock(true), createElementBlock(
           Fragment,
           null,
-          renderList(_ctx.flows, (flow, index) => {
+          renderList(unref(updatedFlows), (flow, index) => {
             return openBlock(), createElementBlock("div", {
               key: index,
               class: "action_container"
@@ -4166,7 +4200,7 @@ var _sfc_main = /* @__PURE__ */ defineComponent({
                 class: normalizeClass(["action", [flow.type]]),
                 secondary: flow.type !== "primary",
                 icon: !flow.label,
-                onClick: withModifiers(($event) => startFlow(flow.id, index), ["stop"])
+                onClick: withModifiers(($event) => startFlow(flow, index), ["stop"])
               }, {
                 default: withCtx(() => [
                   flow.icon ? (openBlock(), createBlock(_component_v_icon, {
@@ -4201,7 +4235,7 @@ var _sfc_main = /* @__PURE__ */ defineComponent({
 
 var e=[],t=[];function n(n,r){if(n&&"undefined"!=typeof document){var a,s=!0===r.prepend?"prepend":"append",d=!0===r.singleTag,i="string"==typeof r.container?document.querySelector(r.container):document.getElementsByTagName("head")[0];if(d){var u=e.indexOf(i);-1===u&&(u=e.push(i)-1,t[u]={}),a=t[u]&&t[u][s]?t[u][s]:t[u][s]=c();}else a=c();65279===n.charCodeAt(0)&&(n=n.substring(1)),a.styleSheet?a.styleSheet.cssText+=n:a.appendChild(document.createTextNode(n));}function c(){var e=document.createElement("style");if(e.setAttribute("type","text/css"),r.attributes)for(var t=Object.keys(r.attributes),n=0;n<t.length;n++)e.setAttribute(t[n],r.attributes[t[n]]);var a="prepend"===s?"afterbegin":"beforeend";return i.insertAdjacentElement(a,e),e}}
 
-var css = "\n.presentation-links[data-v-01aa734c] {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 8px;\n}\n.action[data-v-01aa734c] {\n  position: relative;\n}\n.action.info[data-v-01aa734c] {\n  --v-button-background-color: var(--blue);\n  --v-button-background-color-hover: var(--blue-125);\n  --v-button-color: var(--blue-alt);\n  --v-button-color-hover: var(--blue-alt);\n}\n.action.success[data-v-01aa734c] {\n  --v-button-background-color: var(--theme--success);\n  --v-button-background-color-hover: var(--success-125);\n  --v-button-color: var(--success-alt);\n  --v-button-color-hover: var(--success-alt);\n}\n.action.warning[data-v-01aa734c] {\n  --v-button-background-color: var(--theme--warning);\n  --v-button-background-color-hover: var(--warning-125);\n  --v-button-color: var(--warning-alt);\n  --v-button-color-hover: var(--warning-alt);\n}\n.action.danger[data-v-01aa734c] {\n  --v-button-icon-color: var(--white);\n  --v-button-background-color: var(--theme--danger);\n  --v-button-background-color-hover: var(--danger-125);\n  --v-button-color: var(--danger-alt);\n  --v-button-color-hover: var(--danger-alt);\n}\n.action_container[data-v-01aa734c] {\n  position: relative;\n}\n.tooltip[data-v-01aa734c] {\n  padding: 0.4rem 0.8rem;\n  font-size: 1rem;\n  background: #198754;\n  transform: translateY(-42px);\n  transition: all.3s ease;\n  white-space: nowrap;\n}\n.tooltip[data-v-01aa734c]:after {\n  border-top-color: #198754;\n}\n";
+var css = "\n.presentation-links[data-v-6c982040] {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 8px;\n}\n.action[data-v-6c982040] {\n  position: relative;\n}\n.action.info[data-v-6c982040] {\n  --v-button-background-color: var(--blue);\n  --v-button-background-color-hover: var(--blue-125);\n  --v-button-color: var(--blue-alt);\n  --v-button-color-hover: var(--blue-alt);\n}\n.action.success[data-v-6c982040] {\n  --v-button-background-color: var(--theme--success);\n  --v-button-background-color-hover: var(--success-125);\n  --v-button-color: var(--success-alt);\n  --v-button-color-hover: var(--success-alt);\n}\n.action.warning[data-v-6c982040] {\n  --v-button-background-color: var(--theme--warning);\n  --v-button-background-color-hover: var(--warning-125);\n  --v-button-color: var(--warning-alt);\n  --v-button-color-hover: var(--warning-alt);\n}\n.action.danger[data-v-6c982040] {\n  --v-button-icon-color: var(--white);\n  --v-button-background-color: var(--theme--danger);\n  --v-button-background-color-hover: var(--danger-125);\n  --v-button-color: var(--danger-alt);\n  --v-button-color-hover: var(--danger-alt);\n}\n.action_container[data-v-6c982040] {\n  position: relative;\n}\n.tooltip[data-v-6c982040] {\n  padding: 0.4rem 0.8rem;\n  font-size: 1rem;\n  background: #198754;\n  transform: translateY(-42px);\n  transition: all.3s ease;\n  white-space: nowrap;\n}\n.tooltip[data-v-6c982040]:after {\n  border-top-color: #198754;\n}\n";
 n(css,{});
 
 var _export_sfc = (sfc, props) => {
@@ -4212,7 +4246,7 @@ var _export_sfc = (sfc, props) => {
   return target;
 };
 
-var InterfaceBtn2Flow = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-01aa734c"], ["__file", "interface.vue"]]);
+var InterfaceBtn2Flow = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-6c982040"], ["__file", "interface.vue"]]);
 
 let flowsList = null;
 var index = defineInterface({
@@ -4228,7 +4262,7 @@ var index = defineInterface({
   types: ["alias"],
   group: "presentation",
   // options: null,
-  options: (collection) => {
+  options: ({ collection }) => {
     useApi().get("flows").then(({ data }) => {
       flowsList = data.data.map(({ name, id }) => {
         return {
@@ -4299,6 +4333,18 @@ var index = defineInterface({
                   interface: "select-dropdown",
                   options: {
                     choices: flowsList
+                  }
+                }
+              },
+              {
+                field: "fields",
+                type: "string",
+                name: "$t:fields",
+                meta: {
+                  width: "full",
+                  interface: "system-display-template",
+                  options: {
+                    collectionName: collection
                   }
                 }
               }

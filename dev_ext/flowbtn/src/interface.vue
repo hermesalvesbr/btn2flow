@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { useApi } from "@directus/extensions-sdk";
-import { computed, ref } from "vue";
+import { useApi, getFieldsFromTemplate } from "@directus/extensions-sdk";
+import { ref } from "vue";
 
 type Flow = {
   icon: string;
   label: string;
   type: string;
   id: string;
+  fields: string;
+  payload: object;
 };
 
 type Props = {
@@ -23,9 +25,31 @@ const props = withDefaults(defineProps<Props>(), {
   flows: () => [],
 });
 
-const startFlow = async (id: string, index: number) => {
+const { collection, primaryKey } = toRefs(props);
+const updatedFlows = props.flows;
+
+const fetchCollectionValues = async () => {
   try {
-    const res = await api.get(`flows/trigger/${id}`);
+    const { data } = await api.get(`items/${collection.value}`);
+    if (data.data) return data.data;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+const getCollectionFieldsKeys = (flow) => {
+  const fields = new Set();
+  getFieldsFromTemplate(flow.fields ?? "").forEach((field) =>
+    fields.add(field)
+  );
+  return Array.from(fields);
+};
+
+const startFlow = async (flow: Flow, index: number) => {
+  const { id, payload } = flow;
+
+  try {
+    const res = await api.post(`flows/trigger/${id}`, payload);
     if (res) {
       tooltipId.value = index;
       setTimeout(() => {
@@ -36,17 +60,33 @@ const startFlow = async (id: string, index: number) => {
     console.log(error);
   }
 };
+
+//
+updatedFlows.map(async (flow) => {
+  if (!flow.fields) return;
+  const selectedCollectionItems = getCollectionFieldsKeys(flow);
+  const collectionValues = await fetchCollectionValues();
+  if (!collectionValues || !collectionValues.length) return;
+  flow.payload = {};
+  selectedCollectionItems.forEach((field) => {
+    flow.payload[field] = collectionValues[0][field];
+  });
+});
 </script>
 
 <template>
   <div class="presentation-links">
-    <div v-for="(flow, index) in flows" :key="index" class="action_container">
+    <div
+      v-for="(flow, index) in updatedFlows"
+      :key="index"
+      class="action_container"
+    >
       <v-button
         class="action"
         :class="[flow.type]"
         :secondary="flow.type !== 'primary'"
         :icon="!flow.label"
-        @click.stop="startFlow(flow.id, index)"
+        @click.stop="startFlow(flow, index)"
       >
         <v-icon v-if="flow.icon" left :name="flow.icon" />
         <span v-if="flow.label">{{ flow.label }}</span>
